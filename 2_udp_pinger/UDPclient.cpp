@@ -7,13 +7,15 @@
 #include <unistd.h>
 #include <time.h>
 
-int main() {
-    const char* serverName = "127.0.0.1";
+int main()
+{
+    const char *serverName = "127.0.0.1";
     const int serverPort = 55213;
 
     // Создание UDP-сокета
     int clientSocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-    if (clientSocket == -1) {
+    if (clientSocket == -1)
+    {
         std::cerr << "Не удалось создать сокет" << std::endl;
         return 1;
     }
@@ -24,7 +26,8 @@ int main() {
     serverAddress.sin_addr.s_addr = inet_addr(serverName);
     serverAddress.sin_port = htons(serverPort);
 
-    for (int i = 0; i < 10; ++i) {
+    for (int i = 0; i < 10; ++i)
+    {
         // Установка таймаута на ожидание ответа
         timeval timeout;
         timeout.tv_sec = 1;
@@ -36,18 +39,21 @@ int main() {
         std::string message = oss.str();
 
         // Отправка сообщения серверу
-        sendto(clientSocket, message.c_str(), message.length(), 0, (sockaddr*)&serverAddress, sizeof(serverAddress));
+        sendto(clientSocket, message.c_str(), message.length(), 0, (sockaddr *)&serverAddress, sizeof(serverAddress));
 
         // Получение ответа от сервера
         char modifiedMessage[2048];
         memset(modifiedMessage, 0, sizeof(modifiedMessage));
         sockaddr_in serverResponseAddress;
         socklen_t serverResponseAddressLen = sizeof(serverResponseAddress);
-        ssize_t recvLen = recvfrom(clientSocket, modifiedMessage, sizeof(modifiedMessage), 0, (sockaddr*)&serverResponseAddress, &serverResponseAddressLen);
+        ssize_t recvLen = recvfrom(clientSocket, modifiedMessage, sizeof(modifiedMessage), 0, (sockaddr *)&serverResponseAddress, &serverResponseAddressLen);
 
-        if (recvLen == -1) {
+        if (recvLen == -1)
+        {
             std::cout << "! Превышен таймаут !" << std::endl;
-        } else {
+        }
+        else
+        {
             // Вычисление времени обработки запроса
             timespec startTime, endTime;
             clock_gettime(CLOCK_MONOTONIC, &startTime);

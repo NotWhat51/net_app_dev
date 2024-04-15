@@ -13,7 +13,8 @@
 
 #define ICMP_ECHO_REQUEST 8
 
-unsigned short checksum(void *b, int len) {
+unsigned short checksum(void *b, int len)
+{
     unsigned short *buf = (unsigned short *)b;
     unsigned int sum = 0;
     unsigned short result;
@@ -28,7 +29,8 @@ unsigned short checksum(void *b, int len) {
     return result;
 }
 
-double receiveOnePing(int mySocket, int ID, int timeout, const char* destAddr) {
+double receiveOnePing(int mySocket, int ID, int timeout, const char *destAddr)
+{
     struct timeval tv;
     tv.tv_sec = timeout;
     tv.tv_usec = 0;
@@ -37,24 +39,27 @@ double receiveOnePing(int mySocket, int ID, int timeout, const char* destAddr) {
     FD_ZERO(&readfds);
     FD_SET(mySocket, &readfds);
 
-    if (select(mySocket + 1, &readfds, NULL, NULL, &tv) <= 0) {
+    if (select(mySocket + 1, &readfds, NULL, NULL, &tv) <= 0)
+    {
         return -1; // Timeout
     }
 
     struct sockaddr_in addr;
     socklen_t addr_len = sizeof(addr);
     char buffer[1024];
-    recvfrom(mySocket, buffer, sizeof(buffer), 0, (struct sockaddr*)&addr, &addr_len);
+    recvfrom(mySocket, buffer, sizeof(buffer), 0, (struct sockaddr *)&addr, &addr_len);
 
-    struct icmphdr* icmp_hdr = (struct icmphdr*)(buffer + 20); // Skip IP header
-    if (icmp_hdr->type != ICMP_ECHOREPLY || icmp_hdr->un.echo.id != ID) {
+    struct icmphdr *icmp_hdr = (struct icmphdr *)(buffer + 20); // Skip IP header
+    if (icmp_hdr->type != ICMP_ECHOREPLY || icmp_hdr->un.echo.id != ID)
+    {
         return -1; // Receive error
     }
 
-    return difftime(time(0), *(time_t*)(buffer + 28));
+    return difftime(time(0), *(time_t *)(buffer + 28));
 }
 
-void sendOnePing(int mySocket, const char* destAddr, int ID) {
+void sendOnePing(int mySocket, const char *destAddr, int ID)
+{
     struct icmphdr icmp_hdr;
     icmp_hdr.type = ICMP_ECHO_REQUEST;
     icmp_hdr.code = 0;
@@ -69,15 +74,17 @@ void sendOnePing(int mySocket, const char* destAddr, int ID) {
     addr.sin_port = 0;
     addr.sin_addr.s_addr = inet_addr(destAddr);
 
-    sendto(mySocket, &icmp_hdr, sizeof(icmp_hdr), 0, (struct sockaddr*)&addr, sizeof(addr));
+    sendto(mySocket, &icmp_hdr, sizeof(icmp_hdr), 0, (struct sockaddr *)&addr, sizeof(addr));
 }
 
-double doOnePing(const char* destAddr, int timeout) {
+double doOnePing(const char *destAddr, int timeout)
+{
     int mySocket = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
-    if (mySocket == -1) {
+    if (mySocket < 0)
+    {
         std::cerr << "Ошибка создания сокета" << std::endl;
         exit(1);
-    }   
+    }
 
     int myID = getpid() & 0xFFFF;
     sendOnePing(mySocket, destAddr, myID);
@@ -87,30 +94,38 @@ double doOnePing(const char* destAddr, int timeout) {
     return delay;
 }
 
-void ping(const char* host, int timeout=1) {
-    struct hostent* hostent;
+void ping(const char *host, int timeout = 1)
+{
+    struct hostent *hostent;
 
-    if ((hostent = gethostbyname(host)) == NULL) {
+    if ((hostent = gethostbyname(host)) == NULL)
+    {
         std::cerr << "Хост не найден" << std::endl;
         exit(1);
     }
-    
-    char *  addr = inet_ntoa(*(struct in_addr*)hostent->h_addr_list[0]);
 
-    std::cout << "Ping  " << addr << ":" << std::endl << std::endl;
+    char *addr = inet_ntoa(*(struct in_addr *)hostent->h_addr_list[0]);
 
-    while (true) {
+    std::cout << "Ping  " << addr << ":" << std::endl
+              << std::endl;
+
+    while (true)
+    {
         double delay = doOnePing(addr, timeout);
-        if (delay >= 0) {
+        if (delay >= 0)
+        {
             std::cout << "Reply received in " << delay << " seconds" << std::endl;
-        } else {
+        }
+        else
+        {
             std::cout << "Request timed out" << std::endl;
         }
         sleep(1); // one second
     }
 }
 
-int main() {
+int main()
+{
     ping("8.8.8.8");
     return 0;
 }

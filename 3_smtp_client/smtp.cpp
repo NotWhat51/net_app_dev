@@ -10,11 +10,12 @@
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 
-#define SERVER_ADDR "77.88.21.158"  //"smtp.yandex.ru"
+#define SERVER_ADDR "77.88.21.158" //"smtp.yandex.ru"
 #define SERVER_PORT 465
 #define BUFFER_SIZE 1024
 
-std::string base64_encode(const std::string& data) {
+std::string base64_encode(const std::string &data)
+{
     const std::string base64_chars =
         "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
         "abcdefghijklmnopqrstuvwxyz"
@@ -23,7 +24,8 @@ std::string base64_encode(const std::string& data) {
     std::string result;
     result.reserve((data.size() + 2) / 3 * 4);
 
-    for (size_t i = 0; i < data.size(); i += 3) {
+    for (size_t i = 0; i < data.size(); i += 3)
+    {
         uint32_t bytes =
             (static_cast<uint8_t>(data[i]) << 16) |
             (i + 1 < data.size() ? static_cast<uint8_t>(data[i + 1]) << 8 : 0) |
@@ -35,14 +37,16 @@ std::string base64_encode(const std::string& data) {
         result.append(1, base64_chars[bytes & 0x3F]);
     }
 
-    while (result.size() % 4 != 0) {
+    while (result.size() % 4 != 0)
+    {
         result.append(1, '=');
     }
 
     return result;
 }
 
-int main() {
+int main()
+{
     SSL_library_init();
     SSL_load_error_strings();
     OpenSSL_add_all_algorithms();
@@ -50,7 +54,8 @@ int main() {
     const SSL_METHOD *method = TLS_client_method();
     SSL_CTX *ctx = SSL_CTX_new(method);
 
-    if (!ctx) {
+    if (!ctx)
+    {
         std::cerr << "Не удалось создать SSL-контекст" << std::endl;
         return -1;
     }
@@ -61,7 +66,8 @@ int main() {
 
     // Создание сокета
     clientSocket = socket(AF_INET, SOCK_STREAM, 0);
-    if (clientSocket < 0) {
+    if (clientSocket < 0)
+    {
         std::cerr << "Ошибка создания сокета" << std::endl;
         return -1;
     }
@@ -69,13 +75,15 @@ int main() {
     // Инициализация адреса сервера
     serverAddr.sin_family = AF_INET;
     serverAddr.sin_port = htons(SERVER_PORT);
-    if (inet_pton(AF_INET, SERVER_ADDR, &serverAddr.sin_addr) <= 0) {
+    if (inet_pton(AF_INET, SERVER_ADDR, &serverAddr.sin_addr) <= 0)
+    {
         std::cerr << "Неверный адрес/ Адрес не поддерживается" << std::endl;
         return -1;
     }
 
     // Подключение к серверу
-    if (connect(clientSocket, (struct sockaddr *)&serverAddr, sizeof(serverAddr)) < 0) {
+    if (connect(clientSocket, (struct sockaddr *)&serverAddr, sizeof(serverAddr)) < 0)
+    {
         std::cerr << "Подключение не удалось" << std::endl;
         return -1;
     }
@@ -83,7 +91,8 @@ int main() {
     SSL *ssl = SSL_new(ctx);
     SSL_set_fd(ssl, clientSocket);
 
-    if (SSL_connect(ssl) <= 0) {
+    if (SSL_connect(ssl) <= 0)
+    {
         std::cerr << "Ошибка SSL-соединения" << std::endl;
         ERR_print_errors_fp(stderr);
         return -1;
@@ -91,7 +100,8 @@ int main() {
 
     // Получение сообщения после запроса на подключение
     int bytesReceived = SSL_read(ssl, buffer, BUFFER_SIZE - 1);
-    if (bytesReceived <= 0) {
+    if (bytesReceived <= 0)
+    {
         std::cerr << "Ошибка при получении сообщения от сервера" << std::endl;
         return -1;
     }
@@ -103,7 +113,8 @@ int main() {
     SSL_write(ssl, heloCommand.c_str(), heloCommand.length());
     memset(buffer, 0, BUFFER_SIZE);
     bytesReceived = SSL_read(ssl, buffer, BUFFER_SIZE - 1);
-    if (bytesReceived <= 0) {
+    if (bytesReceived <= 0)
+    {
         std::cerr << "Ошибка при получении сообщения от сервера" << std::endl;
         return -1;
     }
@@ -112,7 +123,7 @@ int main() {
 
     // Команда AUTH PLAIN
     std::string username = "belskaya.se@edu.spbstu.ru";
-    std::string password = "qwerty";    //пример пароля, не надо его использовать
+    std::string password = "qwerty"; // пример пароля, не надо его использовать
     std::string authMsg = "AUTH PLAIN " + base64_encode("\0" + username + "\0" + password) + "\r\n";
     send(clientSocket, authMsg.c_str(), authMsg.length(), 0);
     memset(buffer, 0, BUFFER_SIZE);
@@ -155,7 +166,8 @@ int main() {
     SSL_write(ssl, quit.c_str(), quit.length());
     memset(buffer, 0, BUFFER_SIZE);
     bytesReceived = SSL_read(ssl, buffer, BUFFER_SIZE - 1);
-    if (bytesReceived <= 0) {
+    if (bytesReceived <= 0)
+    {
         std::cerr << "Ошибка при получении сообщения от сервера" << std::endl;
         return -1;
     }
